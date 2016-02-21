@@ -16,7 +16,7 @@ var email, secret, viewID string
 func init() {
 	flag.StringVar(&secret, "secret", "", "set service account private key")
 	flag.StringVar(&email, "email", "xxxxx@xxxxx.gserviceaccount.com", "set service account email")
-	flag.StringVar(&viewID, "viewid", "00000000", "set googla analytics view id")
+	flag.StringVar(&viewID, "viewid", "00000000", "set google analytics view id")
 }
 
 func main() {

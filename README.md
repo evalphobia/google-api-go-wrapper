@@ -7,6 +7,9 @@ golang wrapper library of [Google APIs Client Library for Go](https://github.com
 
 - [analytics](https://godoc.org/google.golang.org/api/analytics/v3)
     - Realtime.Get
+- [bigquery](https://godoc.org/google.golang.org/api/bigquery/v2)
+    - create table
+    - InsertAll
 
 # Requirements
 

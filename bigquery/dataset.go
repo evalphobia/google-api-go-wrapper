@@ -10,6 +10,7 @@ import (
 var (
 	errOperationCreateTable = errors.New("error occured on bigquery.Insert")
 	errOperationInsertAll   = errors.New("error occured on bigquery.InsertAll")
+	errDataType             = errors.New("error data type")
 )
 
 // Dataset repesents bigquery dataset
@@ -40,8 +41,6 @@ func (ds *Dataset) CreateTable(tableID string, schemaStruct interface{}) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("schema: %#v\n", schema.Fields)
-
 	tbl := &bigquery.Table{
 		Schema: schema,
 		TableReference: &bigquery.TableReference{
@@ -61,8 +60,13 @@ func (ds *Dataset) CreateTable(tableID string, schemaStruct interface{}) error {
 }
 
 // InsertAll appends all of map data by using InsertAll api
-func (ds *Dataset) InsertAll(tableID string, rows []map[string]interface{}) error {
-	resp, err := ds.service.Tabledata.InsertAll(ds.projectID, ds.datasetID, tableID, buildRowsFromMaps(rows)).Do()
+func (ds *Dataset) InsertAll(tableID string, data interface{}) error {
+	rows, err := buildTableDataInsertAllRequest(data)
+	if err != nil {
+		return err
+	}
+
+	resp, err := ds.service.Tabledata.InsertAll(ds.projectID, ds.datasetID, tableID, rows).Do()
 	switch {
 	case err != nil:
 		return err
@@ -71,6 +75,45 @@ func (ds *Dataset) InsertAll(tableID string, rows []map[string]interface{}) erro
 	}
 
 	return nil
+}
+
+func buildTableDataInsertAllRequest(data interface{}) (*bigquery.TableDataInsertAllRequest, error) {
+	switch v := data.(type) {
+	case []map[string]interface{}:
+		return buildRowsFromMaps(v), nil
+	case map[string]interface{}:
+		return &bigquery.TableDataInsertAllRequest{
+			Rows: []*bigquery.TableDataInsertAllRequestRows{buildRowFromMap(v)},
+		}, nil
+	}
+
+	if list, ok := getSliceData(data); ok {
+		rows := make([]*bigquery.TableDataInsertAllRequestRows, len(list))
+		for i, v := range list {
+			if !isStruct(v) {
+				continue
+			}
+
+			row, err := buildRowsFromStruct(v)
+			if err != nil {
+				return nil, err
+			}
+
+			rows[i] = row
+		}
+		return &bigquery.TableDataInsertAllRequest{
+			Rows: rows,
+		}, nil
+	}
+
+	if isStruct(data) {
+		row, err := buildRowsFromStruct(data)
+		return &bigquery.TableDataInsertAllRequest{
+			Rows: []*bigquery.TableDataInsertAllRequestRows{row},
+		}, err
+	}
+
+	return nil, errDataType
 }
 
 func buildRowsFromMaps(list []map[string]interface{}) *bigquery.TableDataInsertAllRequest {
@@ -96,4 +139,12 @@ func buildJSONValue(row map[string]interface{}) map[string]bigquery.JsonValue {
 		jsonValue[k] = v
 	}
 	return jsonValue
+}
+
+func buildRowsFromStruct(data interface{}) (*bigquery.TableDataInsertAllRequestRows, error) {
+	row, err := convertStructToMap(data)
+	if err != nil {
+		return nil, err
+	}
+	return buildRowFromMap(row), nil
 }

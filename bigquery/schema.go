@@ -129,3 +129,119 @@ func (t tagOpation) has(tag string) bool {
 	}
 	return false
 }
+
+func convertStructToMap(schemaStruct interface{}) (map[string]interface{}, error) {
+	vv := reflect.ValueOf(schemaStruct)
+	if vv.Kind() == reflect.Ptr {
+		vv = vv.Elem()
+	}
+
+	vt := vv.Type()
+	if vt.Kind() != reflect.Struct {
+		return nil, errNotStructType
+	}
+
+	data := make(map[string]interface{})
+	for i, max := 0, vt.NumField(); i < max; i++ {
+		f := vt.Field(i)
+		if f.PkgPath != "" {
+			continue // skip private field
+		}
+
+		tag, opts := parseTag(f, TagName)
+		if tag == "-" {
+			continue // skip `-` tag
+		}
+
+		v := vv.Field(i)
+		if opts.has("squash") {
+			list, err := convertStructToMap(v.Interface())
+			if err != nil {
+				return data, err
+			}
+
+			for k, v := range list {
+				data[k] = v
+			}
+			continue
+		}
+
+		val := v.Interface()
+		if opts.has("nullable") && isZero(val) {
+			continue
+		}
+
+		data[getNameFromTag(f, TagName)] = val
+	}
+
+	return data, nil
+}
+
+func isZero(value interface{}) bool {
+	switch v := value.(type) {
+	case int:
+		return v == 0
+	case int8:
+		return v == 0
+	case int16:
+		return v == 0
+	case int32:
+		return v == 0
+	case int64:
+		return v == 0
+	case uint:
+		return v == 0
+	case uint8:
+		return v == 0
+	case uint16:
+		return v == 0
+	case uint32:
+		return v == 0
+	case uint64:
+		return v == 0
+	case float32:
+		return v == 0
+	case float64:
+		return v == 0
+	case bool:
+		return v == false
+	case string:
+		return v == ""
+	case zeroable:
+		return v.IsZero()
+	}
+	return false
+}
+
+type zeroable interface {
+	IsZero() bool
+}
+
+func isStruct(value interface{}) bool {
+	vv := reflect.ValueOf(value)
+	if vv.Kind() == reflect.Ptr {
+		vv = vv.Elem()
+	}
+
+	vt := vv.Type()
+	return vt.Kind() == reflect.Struct
+}
+
+func getSliceData(data interface{}) ([]interface{}, bool) {
+	vv := reflect.ValueOf(data)
+	if vv.Kind() == reflect.Ptr {
+		vv = vv.Elem()
+	}
+
+	vt := vv.Type()
+	if vt.Kind() != reflect.Slice {
+		return nil, false
+	}
+
+	size := vv.Len()
+	list := make([]interface{}, size)
+	for i := 0; i < size; i++ {
+		list[i] = vv.Index(i).Interface()
+	}
+	return list, true
+}

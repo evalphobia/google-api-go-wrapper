@@ -2,33 +2,49 @@ package bigquery
 
 import (
 	"errors"
-	"fmt"
 
-	bigquery "google.golang.org/api/bigquery/v2"
+	SDK "google.golang.org/api/bigquery/v2"
+
+	"github.com/evalphobia/google-api-go-wrapper/config"
+	"github.com/evalphobia/google-api-go-wrapper/log"
+)
+
+const (
+	serviceName = "BigQuery"
+	scope       = SDK.BigqueryScope
 )
 
 var (
-	errOperationCreateTable = errors.New("error occured on bigquery.Insert")
-	errOperationInsertAll   = errors.New("error occured on bigquery.InsertAll")
-	errDataType             = errors.New("error data type")
+	errOperationInsertAll = errors.New("error occured on bigquery.InsertAll")
+	errDataType           = errors.New("error data type")
 )
 
-// Dataset repesents bigquery dataset
+// Dataset repesents bigquery dataset.
 type Dataset struct {
-	service   *bigquery.Service
+	service   *SDK.Service
+	logger    log.Logger
 	projectID string
 	datasetID string
 }
 
 // NewDataset returns initialized Dataset
-func NewDataset(cli Client, projectID, datasetID string) (*Dataset, error) {
-	svc, err := bigquery.New(cli.httpClient)
+func NewDataset(conf config.Config, projectID, datasetID string) (*Dataset, error) {
+	if len(conf.Scopes) == 0 {
+		conf.Scopes = append(conf.Scopes, scope)
+	}
+	cli, err := conf.Client()
+	if err != nil {
+		return nil, err
+	}
+
+	svc, err := SDK.New(cli)
 	if err != nil {
 		return nil, err
 	}
 
 	ds := &Dataset{
 		service:   svc,
+		logger:    log.DefaultLogger,
 		projectID: projectID,
 		datasetID: datasetID,
 	}
@@ -41,22 +57,20 @@ func (ds *Dataset) CreateTable(tableID string, schemaStruct interface{}) error {
 	if err != nil {
 		return err
 	}
-	tbl := &bigquery.Table{
+	tbl := &SDK.Table{
 		Schema: schema,
-		TableReference: &bigquery.TableReference{
+		TableReference: &SDK.TableReference{
 			ProjectId: ds.projectID,
 			DatasetId: ds.datasetID,
 			TableId:   tableID,
 		},
 	}
-	resp, err := ds.service.Tables.Insert(ds.projectID, ds.datasetID, tbl).Do()
-	if err != nil {
-		fmt.Printf("err: %+v\n", err.Error())
-		return err
-	}
-	_ = resp
 
-	return nil
+	_, err = ds.service.Tables.Insert(ds.projectID, ds.datasetID, tbl).Do()
+	if err != nil {
+		ds.Errorf("error on `Insert` operation; projectID=%s, datasetID=%s, error=%s;", ds.projectID, ds.datasetID, err.Error())
+	}
+	return err
 }
 
 // InsertAll appends all of map data by using InsertAll api
@@ -69,6 +83,7 @@ func (ds *Dataset) InsertAll(tableID string, data interface{}) error {
 	resp, err := ds.service.Tabledata.InsertAll(ds.projectID, ds.datasetID, tableID, rows).Do()
 	switch {
 	case err != nil:
+		ds.Errorf("error on `InsertAll` operation; projectID=%s, datasetID=%s, table=%s, error=%s;", ds.projectID, ds.datasetID, tableID, err.Error())
 		return err
 	case len(resp.InsertErrors) != 0:
 		return errOperationInsertAll
@@ -77,18 +92,18 @@ func (ds *Dataset) InsertAll(tableID string, data interface{}) error {
 	return nil
 }
 
-func buildTableDataInsertAllRequest(data interface{}) (*bigquery.TableDataInsertAllRequest, error) {
+func buildTableDataInsertAllRequest(data interface{}) (*SDK.TableDataInsertAllRequest, error) {
 	switch v := data.(type) {
 	case []map[string]interface{}:
 		return buildRowsFromMaps(v), nil
 	case map[string]interface{}:
-		return &bigquery.TableDataInsertAllRequest{
-			Rows: []*bigquery.TableDataInsertAllRequestRows{buildRowFromMap(v)},
+		return &SDK.TableDataInsertAllRequest{
+			Rows: []*SDK.TableDataInsertAllRequestRows{buildRowFromMap(v)},
 		}, nil
 	}
 
 	if list, ok := getSliceData(data); ok {
-		rows := make([]*bigquery.TableDataInsertAllRequestRows, len(list))
+		rows := make([]*SDK.TableDataInsertAllRequestRows, len(list))
 		for i, v := range list {
 			if !isStruct(v) {
 				continue
@@ -101,50 +116,55 @@ func buildTableDataInsertAllRequest(data interface{}) (*bigquery.TableDataInsert
 
 			rows[i] = row
 		}
-		return &bigquery.TableDataInsertAllRequest{
+		return &SDK.TableDataInsertAllRequest{
 			Rows: rows,
 		}, nil
 	}
 
 	if isStruct(data) {
 		row, err := buildRowsFromStruct(data)
-		return &bigquery.TableDataInsertAllRequest{
-			Rows: []*bigquery.TableDataInsertAllRequestRows{row},
+		return &SDK.TableDataInsertAllRequest{
+			Rows: []*SDK.TableDataInsertAllRequestRows{row},
 		}, err
 	}
 
 	return nil, errDataType
 }
 
-func buildRowsFromMaps(list []map[string]interface{}) *bigquery.TableDataInsertAllRequest {
-	rows := make([]*bigquery.TableDataInsertAllRequestRows, len(list))
+func buildRowsFromMaps(list []map[string]interface{}) *SDK.TableDataInsertAllRequest {
+	rows := make([]*SDK.TableDataInsertAllRequestRows, len(list))
 	for i, row := range list {
 		rows[i] = buildRowFromMap(row)
 	}
 
-	return &bigquery.TableDataInsertAllRequest{
+	return &SDK.TableDataInsertAllRequest{
 		Rows: rows,
 	}
 }
 
-func buildRowFromMap(row map[string]interface{}) *bigquery.TableDataInsertAllRequestRows {
-	return &bigquery.TableDataInsertAllRequestRows{
+func buildRowFromMap(row map[string]interface{}) *SDK.TableDataInsertAllRequestRows {
+	return &SDK.TableDataInsertAllRequestRows{
 		Json: buildJSONValue(row),
 	}
 }
 
-func buildJSONValue(row map[string]interface{}) map[string]bigquery.JsonValue {
-	jsonValue := make(map[string]bigquery.JsonValue)
+func buildJSONValue(row map[string]interface{}) map[string]SDK.JsonValue {
+	jsonValue := make(map[string]SDK.JsonValue)
 	for k, v := range row {
 		jsonValue[k] = v
 	}
 	return jsonValue
 }
 
-func buildRowsFromStruct(data interface{}) (*bigquery.TableDataInsertAllRequestRows, error) {
+func buildRowsFromStruct(data interface{}) (*SDK.TableDataInsertAllRequestRows, error) {
 	row, err := convertStructToMap(data)
 	if err != nil {
 		return nil, err
 	}
 	return buildRowFromMap(row), nil
+}
+
+// Errorf logging error information.
+func (ds *Dataset) Errorf(format string, v ...interface{}) {
+	ds.logger.Errorf(serviceName, format, v...)
 }

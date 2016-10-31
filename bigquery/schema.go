@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	bigquery "google.golang.org/api/bigquery/v2"
+	SDK "google.golang.org/api/bigquery/v2"
 )
 
 var (
@@ -18,7 +18,7 @@ var (
 	errInvalidType       = errors.New("invalid type field for schema")
 )
 
-func convertToSchema(schemaStruct interface{}) (*bigquery.TableSchema, error) {
+func convertToSchema(schemaStruct interface{}) (*SDK.TableSchema, error) {
 	vv := reflect.ValueOf(schemaStruct)
 	if vv.Kind() == reflect.Ptr {
 		vv = vv.Elem()
@@ -29,7 +29,7 @@ func convertToSchema(schemaStruct interface{}) (*bigquery.TableSchema, error) {
 		return nil, errNotStructType
 	}
 
-	schema := &bigquery.TableSchema{}
+	schema := &SDK.TableSchema{}
 	for i, max := 0, vt.NumField(); i < max; i++ {
 		f := vt.Field(i)
 		if f.PkgPath != "" {
@@ -63,8 +63,8 @@ func convertToSchema(schemaStruct interface{}) (*bigquery.TableSchema, error) {
 	return schema, nil
 }
 
-func createFieldSchema(v reflect.Value) (*bigquery.TableFieldSchema, error) {
-	fs := &bigquery.TableFieldSchema{
+func createFieldSchema(v reflect.Value) (*SDK.TableFieldSchema, error) {
+	fs := &SDK.TableFieldSchema{
 		Mode: "required",
 	}
 	switch v.Kind() {

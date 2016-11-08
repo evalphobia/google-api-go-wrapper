@@ -20,13 +20,13 @@ type Monitor struct {
 	logger    log.Logger
 	projectID string
 
-	commonResource    *SDK.MonitoredResource
+	commonResource    *Resource
 	commonLabels      map[string]string
 	commonForceFields []string
 	commonNullFields  []string
 
 	writeMu    sync.Mutex
-	writeSpool map[string]*SDK.TimeSeries
+	writeSpool map[string][]*SDK.TimeSeries
 }
 
 // NewMonitor returns initialized *Monitor
@@ -48,14 +48,14 @@ func NewMonitor(conf config.Config, projectID string) (*Monitor, error) {
 		service:    svc,
 		logger:     log.DefaultLogger,
 		projectID:  projectID,
-		writeSpool: make(map[string]*SDK.TimeSeries),
+		writeSpool: make(map[string][]*SDK.TimeSeries),
 	}
 	return monitor, nil
 }
 
 // SetCommonResource sets common Resource.
 func (m *Monitor) SetCommonResource(r *Resource) {
-	m.commonResource = r.toMonitorResource()
+	m.commonResource = r
 }
 
 // SetCommonForceFields sets common FourceSendsFields.
@@ -90,20 +90,12 @@ func (m *Monitor) Add(data Data) error {
 		return err
 	}
 
-	name := tsList[0].Metric.Type
+	spool := m.writeSpool
 	m.writeMu.Lock()
 	defer m.writeMu.Unlock()
-	if m.writeSpool[name] == nil {
-		m.writeSpool[name] = tsList[0]
-		if len(tsList) == 0 {
-			return nil
-		}
-
-		tsList = tsList[1:]
-	}
-	points := m.writeSpool[name].Points
 	for _, ts := range tsList {
-		points = append(points, ts.Points...)
+		name := ts.Metric.Type
+		spool[name] = append(spool[name], ts)
 	}
 	return nil
 }
@@ -113,14 +105,14 @@ func (m *Monitor) FlushAll() error {
 	m.writeMu.Lock()
 	defer m.writeMu.Unlock()
 	for name, tsList := range m.writeSpool {
-		req := m.CreateTimeSeriesRequest([]*SDK.TimeSeries{tsList})
+		req := m.CreateTimeSeriesRequest(tsList)
 		_, err := m.service.Projects.TimeSeries.Create(m.formatProjectName(), req).Do()
 		if err != nil {
 			m.Errorf("error on `TimeSeries.Create` operation; projectID=%s, name=%s, error=%s", m.projectID, name, err.Error())
 			return err
 		}
 
-		m.writeSpool[name] = nil
+		delete(m.writeSpool, name)
 	}
 	return nil
 }
@@ -142,7 +134,7 @@ func (m *Monitor) buildTimeSeriesList(data Data) ([]*SDK.TimeSeries, error) {
 		return nil, fmt.Errorf("error: resource is required")
 	}
 
-	return data.TimeSeriesList()
+	return data.TimeSeriesList(m.commonResource)
 }
 
 func (m *Monitor) formatProjectName() string {

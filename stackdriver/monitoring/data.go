@@ -27,7 +27,7 @@ type Data struct {
 }
 
 // TimeSeriesList converts Data to TimeSeries.
-func (d *Data) TimeSeriesList() ([]*SDK.TimeSeries, error) {
+func (d *Data) TimeSeriesList(commonResource ...*Resource) ([]*SDK.TimeSeries, error) {
 	switch v := d.Data.(type) {
 	case []*SDK.TimeSeries:
 		return v, nil
@@ -54,8 +54,11 @@ func (d *Data) TimeSeriesList() ([]*SDK.TimeSeries, error) {
 		NullFields:      d.NullFields,
 	}
 
-	if d.Resource != nil {
+	switch {
+	case d.Resource != nil:
 		ent.Resource = d.Resource.toMonitorResource()
+	case len(commonResource) != 0:
+		ent.Resource = commonResource[0].toMonitorResource()
 	}
 
 	return []*SDK.TimeSeries{ent}, nil

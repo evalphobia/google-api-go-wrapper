@@ -14,6 +14,8 @@ golang wrapper library of [Google APIs Client Library for Go](https://github.com
     - Write
 - [Stackdriver monitoring](https://godoc.org/google.golang.org/api/monitoring/v3)
     - TimeSeries.Create
+- [Cloud Vision](https://godoc.org/google.golang.org/api/vision/v1)
+    - Annotate
 
 # Requirements
 
@@ -218,3 +220,55 @@ if err != nil {
     panic(err)
 }
 ```
+
+## Cloud Vision
+
+Install google's library:
+
+```bash
+$ go get google.golang.org/api/vision/v1
+```
+
+### Annotate
+
+```go
+import (
+    "fmt"
+    "io/ioutil"
+
+    "github.com/evalphobia/google-api-go-wrapper/config"
+    "github.com/evalphobia/google-api-go-wrapper/vision"
+)
+
+...
+
+
+client, err := vision.New(config.Config{})
+if err != nil {
+    panic(err)
+}
+
+img, err := ioutil.ReadFile(file)
+if err != nil {
+    panic(err)
+}
+
+faceResult, err := cli.Face(img)
+if err != nil {
+    panic(err)
+}
+fmt.Printf("FaceDetect=%+v\n", faceResult.FaceResult())
+
+safeResult, err := cli.Safe(img)
+if err != nil {
+    panic(err)
+}
+fmt.Printf("SafeSearch=%+v\n", safeResult.SafeResult())
+
+textResult, err := cli.Text(img)
+if err != nil {
+    panic(err)
+}
+fmt.Printf("TextDetect=%+v\n", textResult.TextResult())
+```
+

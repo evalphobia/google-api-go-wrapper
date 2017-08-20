@@ -1,10 +1,12 @@
 package logging
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
 
+	"google.golang.org/api/googleapi"
 	SDK "google.golang.org/api/logging/v2"
 )
 
@@ -51,8 +53,14 @@ func (d *WriteData) LogEntryList(projectID string) ([]*SDK.LogEntry, error) {
 	switch v := d.Data.(type) {
 	case string:
 		ent.TextPayload = v
+	case googleapi.RawMessage:
+		ent.JsonPayload = v
 	default:
-		ent.JsonPayload = d.Data
+		b, err := json.Marshal(v)
+		if err != nil {
+			return nil, err
+		}
+		ent.JsonPayload = b
 	}
 
 	if d.Resource != nil {

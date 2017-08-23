@@ -49,9 +49,10 @@ client = analytics.New(config.Config{
 // use env parameter when above fields are empty.
 // $GOOGLE_API_GO_PRIVATEKEY : used as `PrivateKey` field.
 // $GOOGLE_API_GO_EMAIL : used as `Email` field.
-// $GOOGLE_APPLICATION_CREDENTIALS : used as `Filename` field.
 client = analytics.New(config.Config{})
 ```
+
+If no other credentials could be found, `Config` will use https://godoc.org/golang.org/x/oauth2/google#FindDefaultCredentials.
 
 ## Google Analytics
 

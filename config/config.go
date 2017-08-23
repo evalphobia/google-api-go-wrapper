@@ -14,19 +14,16 @@ import (
 )
 
 const (
-	defaultEnvCredentialFilePath = "GOOGLE_APPLICATION_CREDENTIALS"
-	defaultEnvPrivateKey         = "GOOGLE_API_GO_PRIVATEKEY"
-	defaultEnvEmail              = "GOOGLE_API_GO_EMAIL"
+	defaultEnvPrivateKey = "GOOGLE_API_GO_PRIVATEKEY"
+	defaultEnvEmail      = "GOOGLE_API_GO_EMAIL"
 )
 
 var (
-	envCredential string
 	envEmail      string
 	envPrivateKey string
 )
 
 func init() {
-	envCredential = os.Getenv(defaultEnvCredentialFilePath)
 	envPrivateKey = os.Getenv(defaultEnvPrivateKey)
 	envEmail = os.Getenv(defaultEnvEmail)
 }
@@ -68,10 +65,16 @@ func (c Config) JWTConfig() (conf *jwt.Config, err error) {
 		conf, err = newJWTConfigFromFilepath(c.Filename)
 	case envEmail != "" && envPrivateKey != "":
 		conf = newJWTConfigFromParams(envPrivateKey, envEmail)
-	case envCredential != "":
-		conf, err = newJWTConfigFromFilepath(envCredential)
 	default:
-		return nil, errors.New("cannot find any environment parameter or required field for google api")
+		var cred *google.DefaultCredentials
+		cred, err = google.FindDefaultCredentials(context.Background(), c.Scopes...)
+		if err != nil {
+			return nil, err
+		}
+		if cred.JSON == nil {
+			return nil, errors.New("cannot find any environment parameter or required field for google api")
+		}
+		conf, err = newJWTConfig(cred.JSON)
 	}
 
 	if err != nil {

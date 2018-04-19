@@ -69,8 +69,11 @@ const (
 	FeatureLogo        FeatureType = "LOGO_DETECTION"
 	FeatureLabel       FeatureType = "LABEL_DETECTION"
 	FeatureText        FeatureType = "TEXT_DETECTION"
+	FeatureDocument    FeatureType = "DOCUMENT_TEXT_DETECTION"
 	FeatureSafe        FeatureType = "SAFE_SEARCH_DETECTION"
 	FeatureProperties  FeatureType = "IMAGE_PROPERTIES"
+	FeatureCrop        FeatureType = "CROP_HINTS"
+	FeatureWeb         FeatureType = "WEB_DETECTION"
 )
 
 func (f FeatureType) String() string {

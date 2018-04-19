@@ -100,6 +100,19 @@ func (r *Response) TextResult() []string {
 	return list
 }
 
+// DocumentResult returns all of full text from OCR results.
+func (r *Response) DocumentResult() []DocumentEntity {
+	if r.Len() == 0 {
+		return nil
+	}
+
+	list := make([]DocumentEntity, r.Len())
+	for i, resp := range r.Responses {
+		list[i] = NewDocumentEntity(resp.FullTextAnnotation)
+	}
+	return list
+}
+
 // SafeResult returns all of text from safe-search results.
 func (r *Response) SafeResult() []SafeEntity {
 	if r.Len() == 0 {
@@ -109,6 +122,32 @@ func (r *Response) SafeResult() []SafeEntity {
 	list := make([]SafeEntity, r.Len())
 	for i, resp := range r.Responses {
 		list[i] = NewSafeEntity(resp.SafeSearchAnnotation)
+	}
+	return list
+}
+
+// CropResult returns all of data from crop hints results.
+func (r *Response) CropResult() []CropEntity {
+	if r.Len() == 0 {
+		return nil
+	}
+
+	list := make([]CropEntity, r.Len())
+	for i, resp := range r.Responses {
+		list[i] = NewCropEntity(resp.CropHintsAnnotation)
+	}
+	return list
+}
+
+// WebResult returns all of data from Web Detection results.
+func (r *Response) WebResult() []WebEntity {
+	if r.Len() == 0 {
+		return nil
+	}
+
+	list := make([]WebEntity, r.Len())
+	for i, resp := range r.Responses {
+		list[i] = NewWebEntity(resp.WebDetection)
 	}
 	return list
 }

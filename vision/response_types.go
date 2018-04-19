@@ -6,6 +6,8 @@ import SDK "google.golang.org/api/vision/v1"
 type Entity struct {
 	Description string
 	Score       float64
+	// for Web
+	EntityID string
 }
 
 // SafeEntity contains result of SafeSearch.
@@ -122,4 +124,26 @@ func (l Likelihood) Likely() bool {
 // VeryLikely checks if Likelifood is more than VeryLikely.
 func (l Likelihood) VeryLikely() bool {
 	return l >= LikelihoodVeryLikely
+}
+
+// Vertex has a 2D point in the image.
+type Vertex struct {
+	X int64
+	Y int64
+}
+
+// NewVertices creates []Vertex from *SDK.BoundingPoly.
+func NewVertices(p *SDK.BoundingPoly) []Vertex {
+	if p == nil {
+		return nil
+	}
+
+	list := make([]Vertex, len(p.Vertices))
+	for i, v := range p.Vertices {
+		list[i] = Vertex{
+			X: v.X,
+			Y: v.Y,
+		}
+	}
+	return list
 }

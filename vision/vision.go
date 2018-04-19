@@ -97,11 +97,35 @@ func (v *Vision) Text(image []byte) (*Response, error) {
 	})
 }
 
+// Document sends image to API and detects document OCR feature type.
+func (v *Vision) Document(image []byte) (*Response, error) {
+	return v.Get(&Resource{
+		Image:    image,
+		TypeList: []FeatureType{FeatureDocument},
+	})
+}
+
 // Safe sends image to API and detects safe-search feature type.
 func (v *Vision) Safe(image []byte) (*Response, error) {
 	return v.Get(&Resource{
 		Image:    image,
 		TypeList: []FeatureType{FeatureSafe},
+	})
+}
+
+// Crop sends image to API and detects crop hints feature type.
+func (v *Vision) Crop(image []byte) (*Response, error) {
+	return v.Get(&Resource{
+		Image:    image,
+		TypeList: []FeatureType{FeatureCrop},
+	})
+}
+
+// Web sends image to API and detects web document feature type.
+func (v *Vision) Web(image []byte) (*Response, error) {
+	return v.Get(&Resource{
+		Image:    image,
+		TypeList: []FeatureType{FeatureWeb},
 	})
 }
 

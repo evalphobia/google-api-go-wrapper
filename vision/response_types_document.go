@@ -175,3 +175,21 @@ func NewTextProperty(p *SDK.TextProperty) TextProperty {
 		Languages: langs,
 	}
 }
+
+// Break is wrapper struct for SDK.DetectedBreak.
+type Break struct {
+	IsPrefix bool
+	Type     string
+}
+
+// NewBreak creates Break from SDK.DetectedBreak.
+func NewBreak(b *SDK.DetectedBreak) Break {
+	if b == nil {
+		return Break{}
+	}
+
+	return Break{
+		IsPrefix: b.IsPrefix,
+		Type:     b.Type,
+	}
+}

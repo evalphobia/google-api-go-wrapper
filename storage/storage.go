@@ -106,6 +106,27 @@ func (s *Storage) Download(opt ObjectOption) (data []byte, err error) {
 	return data, err
 }
 
+// Rename moves an object from opt.Path to destPath..
+func (s *Storage) Rename(destPath string, opt ObjectOption) error {
+	destOpt := opt
+	destOpt.Path = destPath
+	src := s.getObjectHandle(opt)
+	dest := s.getObjectHandle(destOpt)
+
+	ctx := opt.getOrCreateContext()
+	_, err := dest.CopierFrom(src).Run(ctx)
+	if err != nil {
+		s.Errorf("error on `object.write` operation by Rename; bucket=%s, src=%s, dest=%s, error=%s;", opt.BucketName, opt.Path, destPath, err.Error())
+		return err
+	}
+
+	err = src.Delete(ctx)
+	if err != nil {
+		s.Errorf("error on `object.delete` operation by Delete; bucket=%s, path=%s, error=%s;", opt.BucketName, opt.Path, err.Error())
+	}
+	return err
+}
+
 // IsExists checks if an object exists.
 func (s *Storage) IsExists(opt ObjectOption) (isExist bool, err error) {
 	_, err = s.Attrs(opt)

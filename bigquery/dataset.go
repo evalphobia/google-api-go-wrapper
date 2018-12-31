@@ -51,6 +51,11 @@ func NewDataset(conf config.Config, projectID, datasetID string) (*Dataset, erro
 	return ds, nil
 }
 
+// SetLogger sets internal API logger.
+func (ds *Dataset) SetLogger(logger log.Logger) {
+	ds.logger = logger
+}
+
 // CreateTable creates the table with schema defined from given struct
 func (ds *Dataset) CreateTable(tableID string, schemaStruct interface{}) error {
 	schema, err := convertToSchema(schemaStruct)

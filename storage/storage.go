@@ -47,7 +47,7 @@ func New(ctx context.Context, conf config.Config) (*Storage, error) {
 	}, nil
 }
 
-// SetLogger sets logger.
+// SetLogger sets internal API logger.
 func (s *Storage) SetLogger(logger log.Logger) {
 	s.logger = logger
 }

@@ -68,6 +68,11 @@ func (m *Monitor) SetCommonNullFields(fields []string) {
 	m.commonNullFields = fields
 }
 
+// SetLogger sets internal API logger.
+func (m *Monitor) SetLogger(l log.Logger) {
+	m.logger = l
+}
+
 // Create sends custom metric data to stackdriver.
 func (m *Monitor) Create(data Data) error {
 	tsList, err := m.buildTimeSeriesList(data)

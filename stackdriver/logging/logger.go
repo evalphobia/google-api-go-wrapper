@@ -85,6 +85,11 @@ func (l *Logger) SetCommonPartialSuccess(partialSuccess bool) {
 	l.commonPartialSuccess = partialSuccess
 }
 
+// SetLogger sets internal API logger.
+func (l *Logger) SetLogger(logger log.Logger) {
+	l.logger = logger
+}
+
 // Write sends log data to stackdriver's log.
 func (l *Logger) Write(data WriteData) error {
 	entryList, err := l.buildLogEntryList(data)

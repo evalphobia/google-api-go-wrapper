@@ -42,6 +42,11 @@ func New(conf config.Config) (*Vision, error) {
 	return vision, nil
 }
 
+// SetLogger sets internal API logger.
+func (v *Vision) SetLogger(logger log.Logger) {
+	v.logger = logger
+}
+
 // GetFromByte sends image to API and detects all of feature types.
 func (v *Vision) GetFromByte(image []byte) (*Response, error) {
 	return v.Get(&Resource{

@@ -42,6 +42,11 @@ func New(conf config.Config) (*Analytics, error) {
 	return ds, nil
 }
 
+// SetLogger sets internal API logger.
+func (a *Analytics) SetLogger(logger log.Logger) {
+	a.logger = logger
+}
+
 // GetRealtime gets *SDK.RealtimeData.
 func (a *Analytics) GetRealtime(id string) (*SDK.RealtimeData, error) {
 	rs := SDK.NewDataRealtimeService(a.service)

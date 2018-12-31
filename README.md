@@ -41,6 +41,15 @@ client = analytics.New(config.Config{
     Email: "xxx@xxx.gserviceaccount.com",
 })
 
+// create client by json body.
+client = analytics.New(config.Config{
+    CredsJSONBody: `{
+        "type":"service_account",
+        "private_key":"-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----",
+        "client_email":"xxx@xxx.gserviceaccount.com"
+    }`,
+})
+
 // create client by given file path of credential.
 client = analytics.New(config.Config{
     Filename: "/path/to/pem.json",
@@ -49,10 +58,51 @@ client = analytics.New(config.Config{
 // use env parameter when above fields are empty.
 // $GOOGLE_API_GO_PRIVATEKEY : used as `PrivateKey` field.
 // $GOOGLE_API_GO_EMAIL : used as `Email` field.
+// $GOOGLE_API_GO_JSON : used as `CredsJSONBody` field.
 client = analytics.New(config.Config{})
 ```
 
 If no other credentials could be found, `Config` will use https://godoc.org/golang.org/x/oauth2/google#FindDefaultCredentials.
+
+
+## Logger usage
+
+Some clients have `SetLogger` method.
+You can set custom logger and handle error message from Google's API.
+
+These default logger is defined in this library.
+
+### DummyLogger
+
+DummyLogger is default logger.
+This do nothing. Just ignore errors.
+
+```go
+import (
+    "github.com/evalphobia/google-api-go-wrapper/log"
+)
+
+client.SetLogger(&log.DummyLogger{})
+```
+
+### StdLogger
+
+StdLogger prints error messages on stderr.
+
+```go
+import (
+    "github.com/evalphobia/google-api-go-wrapper/log"
+)
+
+client.SetLogger(&log.StdLogger{})
+```
+
+### Stackdriver Error Reporting Logger
+
+Stackdriver Error Reporting Logger sends error messages to [Stackdriver Error Reporting](https://cloud.google.com/error-reporting/).
+
+[See Example](blob/master/log/errorreporting/example_test.go)
+
 
 ## Google Analytics
 

@@ -101,7 +101,7 @@ client.SetLogger(&log.StdLogger{})
 
 Stackdriver Error Reporting Logger sends error messages to [Stackdriver Error Reporting](https://cloud.google.com/error-reporting/).
 
-[See Example](blob/master/log/errorreporting/example_test.go)
+[See Example](/log/errorreporting/example_test.go)
 
 
 ## Google Analytics

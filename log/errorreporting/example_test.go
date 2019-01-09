@@ -34,8 +34,8 @@ func ExampleNew(t *testing.T) {
 func ExampleNewWithConfig(t *testing.T) {
 	ctx := context.Background()
 	logger, err := errorreporting.NewWithConfig(ctx, errorreporting.ErrorConfig{
-		ProjectID:   "test-morikawa",
-		ServiceName: "hoge",
+		ProjectID:   "my-project-id",
+		ServiceName: "my-service",
 		UseSync:     true,
 		OnError: func(err error) {
 			fmt.Printf("[ERROR] err: %s", err.Error())

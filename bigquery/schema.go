@@ -14,6 +14,7 @@ var (
 	TagName = "bigquery"
 
 	errNotStructType     = errors.New("not a struct")
+	errNotMapType        = errors.New("not a map")
 	errInvalidStructType = errors.New("invalid struct for schema")
 	errInvalidType       = errors.New("invalid type field for schema")
 )
@@ -25,7 +26,12 @@ func convertToSchema(schemaStruct interface{}) (*SDK.TableSchema, error) {
 	}
 
 	vt := vv.Type()
-	if vt.Kind() != reflect.Struct {
+	switch vt.Kind() {
+	case reflect.Struct:
+		// valid type
+	case reflect.Map:
+		return convertToSchemaFromMap(schemaStruct)
+	default:
 		return nil, errNotStructType
 	}
 
@@ -54,6 +60,37 @@ func convertToSchema(schemaStruct interface{}) (*SDK.TableSchema, error) {
 			return nil, err
 		case opts.has("nullable"):
 			fs.Mode = "nullable"
+		}
+
+		fs.Name = name
+		schema.Fields = append(schema.Fields, fs)
+	}
+
+	return schema, nil
+}
+
+func convertToSchemaFromMap(schemaStruct interface{}) (*SDK.TableSchema, error) {
+	vv := reflect.ValueOf(schemaStruct)
+	if vv.Kind() == reflect.Ptr {
+		vv = vv.Elem()
+	}
+
+	vt := vv.Type()
+	if vt.Kind() != reflect.Map {
+		return nil, errNotMapType
+	}
+
+	schema := &SDK.TableSchema{}
+	for _, key := range vv.MapKeys() {
+		v := vv.MapIndex(key)
+
+		name, ok := key.Interface().(string)
+		if !ok {
+			continue
+		}
+		fs, err := createFieldSchema(reflect.ValueOf(v.Interface()))
+		if err != nil {
+			return nil, err
 		}
 
 		fs.Name = name

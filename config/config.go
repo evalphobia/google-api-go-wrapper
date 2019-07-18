@@ -21,7 +21,7 @@ const (
 	defaultEnvPrivateKey = "GOOGLE_API_GO_PRIVATEKEY"
 	defaultEnvEmail      = "GOOGLE_API_GO_EMAIL"
 	defaultEnvJSON       = "GOOGLE_API_GO_JSON"
-	defaultEnvUseIAM     = "GOOGLE_API_GO_USE_IAM"
+	defaultEnvUseIAMRole = "GOOGLE_API_GO_USE_IAMROLE"
 )
 
 var (
@@ -29,7 +29,7 @@ var (
 	envEmail      string
 	envPrivateKey string
 	envJSON       string
-	envUseIAM     bool
+	envUseIAMRole bool
 )
 
 func init() {
@@ -37,7 +37,7 @@ func init() {
 	envPrivateKey = os.Getenv(defaultEnvPrivateKey)
 	envEmail = os.Getenv(defaultEnvEmail)
 	envJSON = os.Getenv(defaultEnvJSON)
-	envUseIAM, _ = strconv.ParseBool(os.Getenv(defaultEnvUseIAM))
+	envUseIAMRole, _ = strconv.ParseBool(os.Getenv(defaultEnvUseIAMRole))
 }
 
 type Config struct {
@@ -57,11 +57,11 @@ type Config struct {
 	// tempCredsFilePath is filled by CredsFilePath when UseTempCredsFile is true.
 	tempCredsFilePath string
 
-	UseIAM bool
+	UseIAMRole bool
 }
 
 func (c Config) Client() (*http.Client, error) {
-	if c.UseIAM || envUseIAM {
+	if c.UseIAMRole || envUseIAMRole {
 		return google.DefaultClient(c.NewContext())
 	}
 

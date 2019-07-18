@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"golang.org/x/net/context"
@@ -20,6 +21,7 @@ const (
 	defaultEnvPrivateKey = "GOOGLE_API_GO_PRIVATEKEY"
 	defaultEnvEmail      = "GOOGLE_API_GO_EMAIL"
 	defaultEnvJSON       = "GOOGLE_API_GO_JSON"
+	defaultEnvUseIAM     = "GOOGLE_API_GO_USE_IAM"
 )
 
 var (
@@ -27,6 +29,7 @@ var (
 	envEmail      string
 	envPrivateKey string
 	envJSON       string
+	envUseIAM     bool
 )
 
 func init() {
@@ -34,6 +37,7 @@ func init() {
 	envPrivateKey = os.Getenv(defaultEnvPrivateKey)
 	envEmail = os.Getenv(defaultEnvEmail)
 	envJSON = os.Getenv(defaultEnvJSON)
+	envUseIAM, _ = strconv.ParseBool(os.Getenv(defaultEnvUseIAM))
 }
 
 type Config struct {
@@ -52,9 +56,15 @@ type Config struct {
 	UseTempCredsFile bool
 	// tempCredsFilePath is filled by CredsFilePath when UseTempCredsFile is true.
 	tempCredsFilePath string
+
+	UseIAM bool
 }
 
 func (c Config) Client() (*http.Client, error) {
+	if c.UseIAM || envUseIAM {
+		return google.DefaultClient(c.NewContext())
+	}
+
 	conf, err := c.JWTConfig()
 	if err != nil {
 		return nil, err

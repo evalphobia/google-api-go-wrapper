@@ -13,7 +13,7 @@ const (
 	serviceName = "calendar"
 )
 
-// Calendar repesents GSUITE Calendar API client.
+// Calendar repesents Google Calendar API client.
 type Calendar struct {
 	service *SDK.Service
 	logger  log.Logger

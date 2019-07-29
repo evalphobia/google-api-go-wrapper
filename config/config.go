@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -8,7 +9,6 @@ import (
 	"strconv"
 	"time"
 
-	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
@@ -22,14 +22,26 @@ const (
 	defaultEnvEmail      = "GOOGLE_API_GO_EMAIL"
 	defaultEnvJSON       = "GOOGLE_API_GO_JSON"
 	defaultEnvUseIAMRole = "GOOGLE_API_GO_USE_IAMROLE"
+
+	// for oauth token creds
+	defaultEnvOAuthClientID     = "GOOGLE_API_OAUTH_CLIENT_ID"
+	defaultEnvOAuthClientSecret = "GOOGLE_API_OAUTH_CLIENT_SECRET"
+	defaultEnvOAuthRedirectURL  = "GOOGLE_API_OAUTH_REDIRECT_URL"
+	defaultEnvOAuthCode         = "GOOGLE_API_OAUTH_CODE"
+	defaultEnvOAuthTokenFile    = "GOOGLE_API_OAUTH_TOKEN_FILE"
 )
 
 var (
-	envCredFile   string
-	envEmail      string
-	envPrivateKey string
-	envJSON       string
-	envUseIAMRole bool
+	envCredFile          string
+	envEmail             string
+	envPrivateKey        string
+	envJSON              string
+	envUseIAMRole        bool
+	envOAuthClientID     string
+	envOAuthClientSecret string
+	envOAuthRedirectURL  string
+	envOAuthCode         string
+	envOAuthTokenFile    string
 )
 
 func init() {
@@ -38,6 +50,11 @@ func init() {
 	envEmail = os.Getenv(defaultEnvEmail)
 	envJSON = os.Getenv(defaultEnvJSON)
 	envUseIAMRole, _ = strconv.ParseBool(os.Getenv(defaultEnvUseIAMRole))
+	envOAuthClientID = os.Getenv(defaultEnvOAuthClientID)
+	envOAuthClientSecret = os.Getenv(defaultEnvOAuthClientSecret)
+	envOAuthRedirectURL = os.Getenv(defaultEnvOAuthRedirectURL)
+	envOAuthCode = os.Getenv(defaultEnvOAuthCode)
+	envOAuthTokenFile = os.Getenv(defaultEnvOAuthTokenFile)
 }
 
 type Config struct {
@@ -47,6 +64,14 @@ type Config struct {
 
 	// by file
 	Filename string
+
+	// by OAuth setting
+	OAuthClientID     string
+	OAuthClientSecret string
+	OAuthRefreshToken string
+	OAuthRedirectURL  string
+	OAuthCode         string
+	OAuthTokenFile    string
 
 	Scopes   []string
 	TokenURL string
@@ -63,6 +88,9 @@ type Config struct {
 func (c Config) Client() (*http.Client, error) {
 	if c.UseIAMRole || envUseIAMRole {
 		return google.DefaultClient(c.NewContext())
+	}
+	if c.hasOAuthClient() {
+		return c.NewOAuthClient()
 	}
 
 	conf, err := c.JWTConfig()

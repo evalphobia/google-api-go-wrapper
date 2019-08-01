@@ -47,12 +47,17 @@ func (c *Calendar) SetLogger(logger log.Logger) {
 }
 
 // EventList gets calendarID's events after current time.
-func (c *Calendar) EventList(calendarID string) (*EventList, error) {
-	resp, err := c.eventList(calendarID, EventListOption{
+func (c *Calendar) EventList(calendarID string, max ...int64) (*EventList, error) {
+	opt := EventListOption{
 		TimeMin:      time.Now(),
 		SingleEvents: true,
 		OrderBy:      OrderByStartTime,
-	})
+	}
+	if len(max) != 0 {
+		opt.MaxResults = max[0]
+	}
+
+	resp, err := c.eventList(calendarID, opt)
 	if err != nil {
 		return nil, err
 	}
@@ -93,6 +98,7 @@ func (c *Calendar) eventList(calendarID string, opt EventListOption) (*EventList
 	if err != nil {
 		c.Errorf("error on `Events.List` operation;  error=%s", err.Error())
 	}
+
 	return &EventListResponse{resp}, err
 }
 

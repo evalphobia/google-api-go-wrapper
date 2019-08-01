@@ -26,8 +26,9 @@ type Event struct {
 	HangoutLink string
 	ICalUID     string
 
-	StartDate time.Time
-	EndDate   time.Time
+	StartTime     time.Time
+	EndTime       time.Time
+	IsAllDayEvent bool
 
 	Attendees []User
 	Creator   User
@@ -47,6 +48,10 @@ type Event struct {
 	Updated time.Time
 }
 
+func (e Event) IsStatusConfirmed() bool {
+	return e.Status == "confirmed"
+}
+
 func NewEvents(list []*SDK.Event) []Event {
 	results := make([]Event, len(list))
 	for i, e := range list {
@@ -57,45 +62,50 @@ func NewEvents(list []*SDK.Event) []Event {
 
 func NewEvent(e *SDK.Event) Event {
 	return Event{
-		ID:          e.Id,
-		Status:      e.Status,
-		Summary:     e.Summary,
-		Description: e.Description,
-		Location:    e.Location,
-		HTMLLink:    e.HtmlLink,
-		HangoutLink: e.HangoutLink,
-		ICalUID:     e.ICalUID,
-		StartDate:   mustTimeFromDateTime(e.Start),
-		EndDate:     mustTimeFromDateTime(e.End),
-		Creator:     newUserFromCreator(e.Creator),
-		Organizer:   newUserFromOrganizer(e.Organizer),
-		Attendees:   newUserFromAttendees(e.Attendees),
-		Transparent: e.Transparency == "tranparent",
-		Visibility:  e.Visibility,
-		Locked:      e.Locked,
-		PrivateCopy: e.PrivateCopy,
-		Sequence:    e.Sequence,
-		Kind:        e.Kind,
-		Reminders:   newEventReminders(e.Reminders),
-		Source:      newEventSource(e.Source),
-		Created:     mustTimeFromString(e.Created),
-		Updated:     mustTimeFromString(e.Updated),
+		ID:            e.Id,
+		Status:        e.Status,
+		Summary:       e.Summary,
+		Description:   e.Description,
+		Location:      e.Location,
+		HTMLLink:      e.HtmlLink,
+		HangoutLink:   e.HangoutLink,
+		ICalUID:       e.ICalUID,
+		StartTime:     mustTimeFromDateTime(e.Start),
+		EndTime:       mustTimeFromDateTime(e.End),
+		IsAllDayEvent: isAllDayEvent(e.Start, e.End),
+		Creator:       newUserFromCreator(e.Creator),
+		Organizer:     newUserFromOrganizer(e.Organizer),
+		Attendees:     newUserFromAttendees(e.Attendees),
+		Transparent:   e.Transparency == "tranparent",
+		Visibility:    e.Visibility,
+		Locked:        e.Locked,
+		PrivateCopy:   e.PrivateCopy,
+		Sequence:      e.Sequence,
+		Kind:          e.Kind,
+		Reminders:     newEventReminders(e.Reminders),
+		Source:        newEventSource(e.Source),
+		Created:       mustTimeFromString(e.Created),
+		Updated:       mustTimeFromString(e.Updated),
 	}
 }
 
 func mustTimeFromString(str string) time.Time {
-	dt, _ := time.Parse(str, time.RFC3339)
+	dt, _ := time.Parse(time.RFC3339, str)
 	return dt
 }
 
 func mustTimeFromDateTime(dt *SDK.EventDateTime) time.Time {
 	if dt.Date != "" {
-		t, _ := time.Parse(dt.Date, "2006-01-02")
+		t, _ := time.Parse("2006-01-02", dt.Date)
 		return t
 	}
 
-	t, _ := time.Parse(dt.DateTime, time.RFC3339)
+	t, _ := time.Parse(time.RFC3339, dt.DateTime)
 	return t
+}
+
+func isAllDayEvent(start, end *SDK.EventDateTime) bool {
+	return start.Date != "" && end.Date != ""
 }
 
 type User struct {
@@ -116,6 +126,10 @@ func newUserFromAttendees(list []*SDK.EventAttendee) []User {
 }
 
 func newUserFromAttendee(e *SDK.EventAttendee) User {
+	if e == nil {
+		return User{}
+	}
+
 	return User{
 		ID:             e.Id,
 		Email:          e.Email,
@@ -127,6 +141,10 @@ func newUserFromAttendee(e *SDK.EventAttendee) User {
 }
 
 func newUserFromCreator(e *SDK.EventCreator) User {
+	if e == nil {
+		return User{}
+	}
+
 	return User{
 		ID:          e.Id,
 		Email:       e.Email,
@@ -136,6 +154,10 @@ func newUserFromCreator(e *SDK.EventCreator) User {
 }
 
 func newUserFromOrganizer(e *SDK.EventOrganizer) User {
+	if e == nil {
+		return User{}
+	}
+
 	return User{
 		ID:          e.Id,
 		Email:       e.Email,
@@ -166,6 +188,10 @@ type EventReminders struct {
 }
 
 func newEventReminders(r *SDK.EventReminders) EventReminders {
+	if r == nil {
+		return EventReminders{}
+	}
+
 	list := make([]EventReminder, len(r.Overrides))
 	for i, e := range r.Overrides {
 		list[i] = newEventReminder(e)

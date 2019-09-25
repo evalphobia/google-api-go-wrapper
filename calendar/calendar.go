@@ -57,6 +57,11 @@ func (c *Calendar) EventList(calendarID string, max ...int64) (*EventList, error
 		opt.MaxResults = max[0]
 	}
 
+	return c.EventListWithOption(calendarID, opt)
+}
+
+// EventListWithOption gets calendarID's events with option.
+func (c *Calendar) EventListWithOption(calendarID string, opt EventListOption) (*EventList, error) {
 	resp, err := c.eventList(calendarID, opt)
 	if err != nil {
 		return nil, err

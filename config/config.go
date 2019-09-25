@@ -66,6 +66,7 @@ type Config struct {
 	Filename string
 
 	// by OAuth setting
+	NoOAuthClient     bool // for multiple config and avoid to use environment value.
 	OAuthClientID     string
 	OAuthClientSecret string
 	OAuthRefreshToken string
@@ -82,14 +83,15 @@ type Config struct {
 	// tempCredsFilePath is filled by CredsFilePath when UseTempCredsFile is true.
 	tempCredsFilePath string
 
-	UseIAMRole bool
+	UseIAMRole   bool
+	NoUseIAMRole bool // for multiple config and avoid to use environment value.
 }
 
 func (c Config) Client() (*http.Client, error) {
-	if c.UseIAMRole || envUseIAMRole {
+	if c.useIAMRole() {
 		return google.DefaultClient(c.NewContext())
 	}
-	if c.hasOAuthClient() {
+	if c.useOAuthClient() {
 		return c.NewOAuthClient()
 	}
 
@@ -100,6 +102,24 @@ func (c Config) Client() (*http.Client, error) {
 
 	cli := conf.Client(c.NewContext())
 	return cli, nil
+}
+
+func (c Config) TokenSource(ctx context.Context) (oauth2.TokenSource, error) {
+	conf, err := c.JWTConfig()
+	if err != nil {
+		return nil, err
+	}
+	return conf.TokenSource(ctx), nil
+}
+
+func (c Config) useIAMRole() bool {
+	switch {
+	case c.NoUseIAMRole:
+		return false
+	case c.UseIAMRole:
+		return true
+	}
+	return envUseIAMRole
 }
 
 // CredsFilePath returns credential file path.

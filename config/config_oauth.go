@@ -97,7 +97,10 @@ func (c Config) loadOAuthTokenFromFile(path string) (*oauth2.Token, error) {
 	return tok, err
 }
 
-func (c Config) hasOAuthClient() bool {
+func (c Config) useOAuthClient() bool {
+	if c.NoOAuthClient {
+		return false
+	}
 	return c.getOAuthClientID() != ""
 }
 

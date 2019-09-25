@@ -8,12 +8,40 @@ golang wrapper library of [Google APIs Client Library for Go](https://github.com
 - [Google Analytics](https://godoc.org/google.golang.org/api/analytics/v3)
     - Realtime.Get
 - [BigQuery](https://godoc.org/google.golang.org/api/bigquery/v2)
-    - create table
-    - InsertAll
+    - Datasets.Insert
+    - Datasets.Patch
+    - Datasets.Update
+    - Datasets.Delete
+    - Datasets.Get
+    - Datasets.List
+    - Datasets.Delete
+    - Jobs.Insert
+    - Jobs.Query
+    - Jobs.Cancel
+    - Jobs.Get
+    - Jobs.List
+    - Jobs.GetQueryResults
+    - Tabledata.InsertAll
+    - Tabledata.List
+    - Table.Insert
+    - Table.Patch
+    - Table.Update
+    - Table.Delete
+    - Table.Get
+    - Table.List
+- [Google Calendar](https://godoc.org/google.golang.org/api/calendar/v3)
+    - Events.List
 - [Stackdriver logging](https://godoc.org/google.golang.org/api/logging/v2)
     - Write
 - [Stackdriver monitoring](https://godoc.org/google.golang.org/api/monitoring/v3)
     - TimeSeries.Create
+- Stackdriver trace
+    - OpenCensus API
+- Storage
+    - Upload
+    - Download
+    - Delete
+    - Rename
 - [Cloud Vision](https://godoc.org/google.golang.org/api/vision/v1)
     - Annotate
 

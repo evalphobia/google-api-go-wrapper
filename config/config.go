@@ -16,7 +16,7 @@ import (
 
 const (
 	// see https://godoc.org/golang.org/x/oauth2/google#FindDefaultCredentials
-	defaultEnvCredFile = "GOOGLE_APPLICATION_CREDENTIALS"
+	defaultEnvCredsFile = "GOOGLE_APPLICATION_CREDENTIALS"
 
 	defaultEnvPrivateKey = "GOOGLE_API_GO_PRIVATEKEY"
 	defaultEnvEmail      = "GOOGLE_API_GO_EMAIL"
@@ -29,6 +29,7 @@ const (
 	defaultEnvOAuthRedirectURL  = "GOOGLE_API_OAUTH_REDIRECT_URL"
 	defaultEnvOAuthCode         = "GOOGLE_API_OAUTH_CODE"
 	defaultEnvOAuthTokenFile    = "GOOGLE_API_OAUTH_TOKEN_FILE"
+	defaultEnvOAuthCredsFile    = "GOOGLE_API_OAUTH_CREDENTIALS"
 )
 
 var (
@@ -42,10 +43,11 @@ var (
 	envOAuthRedirectURL  string
 	envOAuthCode         string
 	envOAuthTokenFile    string
+	envOAuthCredsFile    string
 )
 
 func init() {
-	envCredFile = os.Getenv(defaultEnvCredFile)
+	envCredFile = os.Getenv(defaultEnvCredsFile)
 	envPrivateKey = os.Getenv(defaultEnvPrivateKey)
 	envEmail = os.Getenv(defaultEnvEmail)
 	envJSON = os.Getenv(defaultEnvJSON)
@@ -55,6 +57,7 @@ func init() {
 	envOAuthRedirectURL = os.Getenv(defaultEnvOAuthRedirectURL)
 	envOAuthCode = os.Getenv(defaultEnvOAuthCode)
 	envOAuthTokenFile = os.Getenv(defaultEnvOAuthTokenFile)
+	envOAuthCredsFile = os.Getenv(defaultEnvOAuthCredsFile)
 }
 
 type Config struct {
@@ -73,6 +76,7 @@ type Config struct {
 	OAuthRedirectURL  string
 	OAuthCode         string
 	OAuthTokenFile    string
+	OAuthCredsFile    string
 
 	Scopes   []string
 	TokenURL string

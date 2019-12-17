@@ -18,12 +18,9 @@ const (
 
 // NewOAuthClient creates http.Client from OAuth parameters.
 func (c Config) NewOAuthClient() (*http.Client, error) {
-	conf := oauth2.Config{
-		ClientID:     c.getOAuthClientID(),
-		ClientSecret: c.getOAuthClientSecret(),
-		RedirectURL:  c.getOAuthRedirectURL(),
-		Scopes:       c.Scopes,
-		Endpoint:     google.Endpoint,
+	conf, err := c.oauthConfig()
+	if err != nil {
+		return nil, err
 	}
 
 	ctx := context.WithValue(oauth2.NoContext, oauth2.HTTPClient, &http.Client{
@@ -62,15 +59,26 @@ func (c Config) NewOAuthClient() (*http.Client, error) {
 
 // GetOAuthCodeURL returns URL to get oauth code.
 func (c Config) GetOAuthCodeURL() string {
-	conf := oauth2.Config{
-		ClientID:     c.getOAuthClientID(),
-		ClientSecret: c.getOAuthClientSecret(),
-		RedirectURL:  c.getOAuthRedirectURL(),
-		Scopes:       c.Scopes,
-		Endpoint:     google.Endpoint,
+	conf, _ := c.oauthConfig()
+	return conf.AuthCodeURL("state", oauth2.AccessTypeOffline, oauth2.ApprovalForce)
+}
+
+func (c Config) oauthConfig() (*oauth2.Config, error) {
+	if c.getOAuthCredentials() == "" {
+		return &oauth2.Config{
+			ClientID:     c.getOAuthClientID(),
+			ClientSecret: c.getOAuthClientSecret(),
+			RedirectURL:  c.getOAuthRedirectURL(),
+			Scopes:       c.Scopes,
+			Endpoint:     google.Endpoint,
+		}, nil
 	}
 
-	return conf.AuthCodeURL("state", oauth2.AccessTypeOffline, oauth2.ApprovalForce)
+	b, err := ioutil.ReadFile(c.getOAuthCredentials())
+	if err != nil {
+		return nil, err
+	}
+	return google.ConfigFromJSON(b)
 }
 
 // saveOAuthTokenFile saves oauth token json on local file.
@@ -101,7 +109,19 @@ func (c Config) useOAuthClient() bool {
 	if c.NoOAuthClient {
 		return false
 	}
-	return c.getOAuthClientID() != ""
+	switch {
+	case c.getOAuthCredentials() != "",
+		c.getOAuthClientID() != "":
+		return true
+	}
+	return false
+}
+
+func (c Config) getOAuthCredentials() string {
+	if c.OAuthCredsFile != "" {
+		return c.OAuthCredsFile
+	}
+	return envOAuthCredsFile
 }
 
 func (c Config) getOAuthClientID() string {

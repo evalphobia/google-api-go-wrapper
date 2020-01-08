@@ -57,3 +57,29 @@ const (
 func (f OrderBy) String() string {
 	return string(f)
 }
+
+// CalendarListOption contains option for calendar_list.list operation.
+type CalendarListOption struct {
+	MaxResults    int64
+	MinAccessRole string
+	PageToken     string
+	SyncToken     string
+	ShowDeleted   bool
+	ShowHidden    bool
+}
+
+func (o CalendarListOption) hasMaxResults() bool {
+	return o.MaxResults > 0
+}
+
+func (o CalendarListOption) hasMinAccessRole() bool {
+	return o.MinAccessRole != ""
+}
+
+func (o CalendarListOption) hasPageToken() bool {
+	return o.PageToken != ""
+}
+
+func (o CalendarListOption) hasSyncToken() bool {
+	return o.SyncToken != ""
+}

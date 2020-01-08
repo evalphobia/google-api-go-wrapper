@@ -191,13 +191,8 @@ func newEventReminders(r *SDK.EventReminders) EventReminders {
 	if r == nil {
 		return EventReminders{}
 	}
-
-	list := make([]EventReminder, len(r.Overrides))
-	for i, e := range r.Overrides {
-		list[i] = newEventReminder(e)
-	}
 	return EventReminders{
-		Overrides:  list,
+		Overrides:  newEventReminderList(r.Overrides),
 		UseDefault: r.UseDefault,
 	}
 }
@@ -207,9 +202,139 @@ type EventReminder struct {
 	Minutes int64
 }
 
+func newEventReminderList(list []*SDK.EventReminder) []EventReminder {
+	result := make([]EventReminder, len(list))
+	for i, e := range list {
+		result[i] = newEventReminder(e)
+	}
+	return result
+}
+
 func newEventReminder(e *SDK.EventReminder) EventReminder {
 	return EventReminder{
 		Method:  e.Method,
 		Minutes: e.Minutes,
+	}
+}
+
+type CalendarListResponse struct {
+	*SDK.CalendarList
+}
+
+// CalendarList contains multiple calendars.
+type CalendarList struct {
+	List          []CalendarEntry
+	ETag          string
+	Kind          string
+	NextPageToken string
+	NextSyncToken string
+}
+
+// CalendarEntry contains calendar information on Google Calendar.
+type CalendarEntry struct {
+	ID              string
+	ETag            string
+	Summary         string
+	SummaryOverride string
+	Description     string
+	Kind            string
+	Location        string
+
+	AccessRole      string
+	BackgroundColor string
+	ColorID         string
+	ForegroundColor string
+	TimeZone        string
+
+	Primary  bool
+	Selected bool
+	Deleted  bool
+	Hidden   bool
+
+	DefaultReminders     []EventReminder
+	ConferenceProperties ConferenceProperties
+	NotificationSettings NotificationSettings
+}
+
+func NewCalendarEntries(list []*SDK.CalendarListEntry) []CalendarEntry {
+	results := make([]CalendarEntry, len(list))
+	for i, e := range list {
+		results[i] = NewCalendarEntry(e)
+	}
+	return results
+}
+
+func NewCalendarEntry(e *SDK.CalendarListEntry) CalendarEntry {
+	return CalendarEntry{
+		ID:              e.Id,
+		ETag:            e.Etag,
+		Summary:         e.Summary,
+		SummaryOverride: e.SummaryOverride,
+		Description:     e.Description,
+		Kind:            e.Kind,
+		Location:        e.Location,
+
+		AccessRole:      e.AccessRole,
+		ColorID:         e.ColorId,
+		BackgroundColor: e.BackgroundColor,
+		ForegroundColor: e.ForegroundColor,
+		TimeZone:        e.TimeZone,
+
+		Primary:  e.Primary,
+		Selected: e.Selected,
+		Deleted:  e.Deleted,
+		Hidden:   e.Hidden,
+
+		DefaultReminders:     newEventReminderList(e.DefaultReminders),
+		ConferenceProperties: newConferenceProperties(e.ConferenceProperties),
+		NotificationSettings: newNotificationSettings(e.NotificationSettings),
+	}
+}
+
+type ConferenceProperties struct {
+	AllowedConferenceSolutionTypes []string
+}
+
+func newConferenceProperties(s *SDK.ConferenceProperties) ConferenceProperties {
+	if s == nil {
+		return ConferenceProperties{}
+	}
+
+	list := make([]string, len(s.AllowedConferenceSolutionTypes))
+	for i, t := range s.AllowedConferenceSolutionTypes {
+		list[i] = t
+	}
+	return ConferenceProperties{
+		AllowedConferenceSolutionTypes: list,
+	}
+}
+
+type NotificationSettings struct {
+	Notifications []CalendarNotification
+}
+
+func newNotificationSettings(s *SDK.CalendarListEntryNotificationSettings) NotificationSettings {
+	if s == nil {
+		return NotificationSettings{}
+	}
+
+	list := make([]CalendarNotification, len(s.Notifications))
+	for i, n := range s.Notifications {
+		list[i] = newCalendarNotification(n)
+	}
+	return NotificationSettings{
+		Notifications: list,
+	}
+}
+
+type CalendarNotification struct {
+	Method string
+	Type   string
+}
+
+func newCalendarNotification(n *SDK.CalendarNotification) CalendarNotification {
+	return CalendarNotification{
+		Method: n.Method,
+		Type:   n.Type,
 	}
 }

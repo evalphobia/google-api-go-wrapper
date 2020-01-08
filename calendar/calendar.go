@@ -107,6 +107,61 @@ func (c *Calendar) eventList(calendarID string, opt EventListOption) (*EventList
 	return &EventListResponse{resp}, err
 }
 
+// CalendarList gets calendar list.
+func (c *Calendar) CalendarList(max ...int64) (*CalendarList, error) {
+	opt := CalendarListOption{}
+	if len(max) != 0 {
+		opt.MaxResults = max[0]
+	}
+
+	return c.CalendarListWithOption(opt)
+}
+
+// CalendarListWithOption gets calendar list with option.
+func (c *Calendar) CalendarListWithOption(opt CalendarListOption) (*CalendarList, error) {
+	resp, err := c.calendarList(opt)
+	if err != nil {
+		return nil, err
+	}
+	return &CalendarList{
+		List:          NewCalendarEntries(resp.Items),
+		ETag:          resp.Etag,
+		Kind:          resp.Kind,
+		NextPageToken: resp.NextPageToken,
+		NextSyncToken: resp.NextSyncToken,
+	}, nil
+}
+
+// calendarList executes calendar_list.list operation.
+func (c *Calendar) calendarList(opt CalendarListOption) (*CalendarListResponse, error) {
+	listCall := c.service.CalendarList.List()
+	if opt.hasMaxResults() {
+		listCall.MaxResults(opt.MaxResults)
+	}
+	if opt.hasMinAccessRole() {
+		listCall.MinAccessRole(opt.MinAccessRole)
+	}
+	if opt.hasPageToken() {
+		listCall.PageToken(opt.PageToken)
+	}
+	if opt.hasSyncToken() {
+		listCall.SyncToken(opt.SyncToken)
+	}
+	if opt.ShowDeleted {
+		listCall.ShowDeleted(opt.ShowDeleted)
+	}
+	if opt.ShowHidden {
+		listCall.ShowHidden(opt.ShowHidden)
+	}
+
+	resp, err := listCall.Do()
+	if err != nil {
+		c.Errorf("error on `CaledarList.List` operation;  error=%s", err.Error())
+	}
+
+	return &CalendarListResponse{resp}, err
+}
+
 // Errorf logging error information.
 func (c *Calendar) Errorf(format string, vv ...interface{}) {
 	c.logger.Errorf(serviceName, format, vv...)

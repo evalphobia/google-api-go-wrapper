@@ -12,6 +12,9 @@ type Resource struct {
 	Type         FeatureType
 	TypeList     []FeatureType
 	MaxResults   int64
+
+	// options
+	LanguageHints []string
 }
 
 // isContainsValidImage checks if any images or url are set or not.
@@ -56,6 +59,15 @@ func (r *Resource) hasType() bool {
 
 func (r *Resource) hasTypeList() bool {
 	return len(r.TypeList) != 0
+}
+
+func (r *Resource) createImageContext() *SDK.ImageContext {
+	c := &SDK.ImageContext{}
+	if len(r.LanguageHints) != 0 {
+		c.LanguageHints = r.LanguageHints
+		return c
+	}
+	return nil
 }
 
 // FeatureType is type for feature.

@@ -192,6 +192,7 @@ func createAnnotateImageRequestsForContent(r *Resource) []*SDK.AnnotateImageRequ
 		images = append(images, r.Image)
 	}
 
+	imageContext := r.createImageContext()
 	requests := make([]*SDK.AnnotateImageRequest, len(images))
 	for i, byt := range images {
 		var base64Image string
@@ -207,6 +208,7 @@ func createAnnotateImageRequestsForContent(r *Resource) []*SDK.AnnotateImageRequ
 			Image: &SDK.Image{
 				Content: base64Image,
 			},
+			ImageContext: imageContext,
 		}
 	}
 

@@ -127,6 +127,37 @@ func (s *Storage) Rename(destPath string, opt ObjectOption) error {
 	return err
 }
 
+// Copy copies an object from opt.Path to destPath..
+func (s *Storage) Copy(destPath string, opt ObjectOption) error {
+	destOpt := opt
+	destOpt.Path = destPath
+	src := s.getObjectHandle(opt)
+	dest := s.getObjectHandle(destOpt)
+
+	ctx := opt.getOrCreateContext()
+	_, err := dest.CopierFrom(src).Run(ctx)
+	if err != nil {
+		s.Errorf("error on `object.write` operation by Copy; bucket=%s, src=%s, dest=%s, error=%s;", opt.BucketName, opt.Path, destPath, err.Error())
+	}
+	return err
+}
+
+// CopyToBucket copies an object from opt.Path to another bucket.
+func (s *Storage) CopyToBucket(destBucket, destPath string, opt ObjectOption) error {
+	destOpt := opt
+	destOpt.BucketName = destBucket
+	destOpt.Path = destPath
+	src := s.getObjectHandle(opt)
+	dest := s.getObjectHandle(destOpt)
+
+	ctx := opt.getOrCreateContext()
+	_, err := dest.CopierFrom(src).Run(ctx)
+	if err != nil {
+		s.Errorf("error on `object.write` operation by Copy; bucket=%s, src=%s, dest=%s, error=%s;", opt.BucketName, opt.Path, destPath, err.Error())
+	}
+	return err
+}
+
 // IsExists checks if an object exists.
 func (s *Storage) IsExists(opt ObjectOption) (isExist bool, err error) {
 	_, err = s.Attrs(opt)

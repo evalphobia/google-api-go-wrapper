@@ -4,11 +4,11 @@ import "context"
 
 // ObjectOption is optional parameters used for object call.
 type ObjectOption struct {
+	Context    context.Context
 	BucketName string
 	Path       string
-	MaxResult  int64
-	Projection string
-	Context    context.Context
+
+	CacheControl string
 }
 
 func (o ObjectOption) getOrCreateContext() context.Context {

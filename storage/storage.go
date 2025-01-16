@@ -71,6 +71,10 @@ func (s *Storage) UploadByFile(filepath string, opt ObjectOption) error {
 // Upload uploads an object from io.Reader.
 func (s *Storage) Upload(r io.Reader, opt ObjectOption) error {
 	w := s.getObjectHandle(opt).NewWriter(opt.getOrCreateContext())
+	if opt.CacheControl != "" {
+		w.CacheControl = opt.CacheControl
+	}
+
 	_, err := io.Copy(w, r)
 	if err != nil {
 		s.Errorf("error on `object.write` operation by Upload; bucket=%s, path=%s, error=%s;", opt.BucketName, opt.Path, err.Error())
@@ -192,8 +196,7 @@ func (s *Storage) Errorf(format string, vv ...interface{}) {
 
 func hasDeleteError(err error) bool {
 	switch {
-	case err == nil,
-		isErrObjectNotExist(err):
+	case err == nil, isErrObjectNotExist(err):
 		return false
 	default:
 		return true

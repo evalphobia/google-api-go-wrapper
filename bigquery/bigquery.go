@@ -14,10 +14,7 @@ const (
 	scope       = SDK.BigqueryScope
 )
 
-var (
-	errOperationInsertAll = errors.New("error occured on bigquery.InsertAll")
-	errDataType           = errors.New("error data type")
-)
+var errDataType = errors.New("error data type")
 
 // BigQuery is BigQuery API client..
 type BigQuery struct {

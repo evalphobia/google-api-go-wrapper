@@ -1,6 +1,8 @@
 package bigquery
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 
 	SDK "google.golang.org/api/bigquery/v2"
@@ -97,7 +99,17 @@ func (t *TableAPI) InsertAll(data interface{}) error {
 	case err != nil:
 		return err
 	case len(resp.InsertErrors) != 0:
-		return errOperationInsertAll
+		var errs []error
+		for _, insertErr := range resp.InsertErrors {
+			if insertErr != nil {
+				var ee []error
+				for _, err := range insertErr.Errors {
+					ee = append(ee, fmt.Errorf("index %d: %s", insertErr.Index, err.Message))
+				}
+				errs = append(errs, errors.Join(ee...))
+			}
+		}
+		return errors.Join(errs...)
 	}
 
 	return nil
